@@ -8,7 +8,7 @@ function consLog(input) {
 
 
 class App extends Component {
-  state = {shortcuts: [], keyboardInput: 'cancer', translations: {}}
+  state = {shortcuts: [], keyboardInput: 'cancer', translations: {}, newKey: '', newValue: ''}
 
   constructor(props) {
     super(props);
@@ -25,8 +25,27 @@ class App extends Component {
       body: JSON.stringify({
         word: word
       })
+    }).then(res => res.json()).then(response => {
+      return {input: word, suggestions: response};
     });
   }
+
+  setShortcut(key, value) {
+    return fetch('shortcuts/new', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: key,
+        value: value
+      })
+    });
+
+
+  }
+
 
   componentDidMount() {
     this.updateShortcuts();
@@ -39,69 +58,99 @@ class App extends Component {
 
     words = words.concat(keyboardInput.split(' '));
 
-    // TODO: make async
+    var promises = [];
+
+    translations = Object.keys(translations).filter(obj => {
+      console.log(obj);
+      words.includes(obj);
+    });
+
     words.forEach(word => {
       if (!(word in translations )) {
-
-        this.getShortcuts(word)
-        .then(res => res.json())
-        .then(response => {
-
-          if(response.length > 0) {
-            translations[word] = response;
-
-            this.setState({
-              shortcuts: response,
-              translations: translations
-            });
-          }
-        })
-        .catch(error => {
-          // console.log(error);
-        });
+        promises.push(this.getShortcuts(word));
       }
     });
 
+    Promise.all(promises).then(responses => {
+      responses.forEach(response => {
+        if(response.suggestions.length > 0) {
+          translations[response.input] = response.suggestions;
+
+        } else {
+          // word isn't in the translations,
+          // nor are there shortcuts. delete translation
+          delete translations[response.input];
+        }
+      });
+
+    }).then(() =>{
+      this.setState({
+        translations: translations
+      });
+    });
+  }
+
+  handleNewShortcuts = () => {
+    var key = this.state.newKey;
+    var value = this.state.newValue;
+    consLog(value);
+
+    var output = this.setShortcut(key, value);
+    var updatedTranslations = this.state.translations;
+    delete updatedTranslations[key];
+    this.setState({key: '', value: '', translations: updatedTranslations}, () => {
+      this.updateShortcuts();
+    });
   }
 
   handleChange(event) {
-    this.setState({keyboardInput: event.target.value} , () => {
+    this.setState({[event.target.name]: event.target.value} , () => {
       this.updateShortcuts();
     });
   }
 
   render() {
     var rows = [];
-    var lastCategory = null;
-    // consLog(this.state.translations);
     var index = 0;
 
-    Object.keys(this.state.translations).map((key) => {
-      consLog(this.state.translations[key]);
+    Object.keys(this.state.translations).forEach(key => {
 
       var innerTranslations = [];
 
       this.state.translations[key].forEach((potential) => {
         index++;
-        innerTranslations.push(<th key={index}>{potential.text}</th>);
-      })
-      rows.push(<tr><th>{key}</th>{innerTranslations}</tr>);
+        innerTranslations.push(<td key={index}>{potential.text}</td>);
+      });
+      index++;
 
+      rows.push(<tr key={index}><td>{key}</td>{innerTranslations}</tr>);
     });
 
     return (
       <div className="App">
         <h1>Diagnosis</h1>
-        <form>
-          <label>
-            <textarea value={this.state.keyboardInput} onChange={this.handleChange} />
-          </label>
-        </form>
-        <table>
-          <tbody>
+          <input type="text" name="keyboardInput" value={this.state.keyboardInput} onChange={this.handleChange} />
+
+          <table>
+            <tbody>
+              <tr>
+                <th>Input Text</th>
+                <th>Potential Terms</th>
+              </tr>
+
               {rows}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+          Add new shortcut:
+          <input type="text" name="newKey" value={this.state.newKey}
+            onChange={this.handleChange}/>
+          <input type="text" name="newValue" value={this.state.newValue}
+            onChange={this.handleChange}/>
+
+          <button onClick={this.handleNewShortcuts}>
+            Add New Shortcut
+          </button>
+
       </div>
     );
   }

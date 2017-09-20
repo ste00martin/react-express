@@ -20,4 +20,22 @@ router.post('/', function(req, res) {
   res.json(response);
 });
 
+
+router.post('/new', function(req, res) {
+
+  res.contentType('application/json');
+
+  var key = req.body.key;
+  var value = req.body.value;
+
+  Shortcuts.set(key, value);
+  console.log(key);
+
+  var response = Shortcuts.get(key);
+
+  console.log(value);
+  console.log("response: "+ JSON.stringify(response));
+  res.json(response);
+});
+
 module.exports = router;

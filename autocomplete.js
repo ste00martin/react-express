@@ -1,5 +1,7 @@
 'use strict';
 
+// The getter and setter for the autosugesstions
+
 var fs = require("fs");
 
 class Suggestions {
@@ -37,9 +39,6 @@ class Suggestions {
     this.output[key] = newVal.concat(existing);
   }
 }
-
-// var stuff = new Suggestions();
-// console.log(stuff.get('cancer'));
 
 module.exports = Suggestions;
 
