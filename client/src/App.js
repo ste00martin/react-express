@@ -6,28 +6,9 @@ function consLog(input) {
   console.log(JSON.stringify(input));
 }
 
-//
-// class DiagnosisShortcuts extends Component {
-//   render() {
-//     var inputText = this.props.inputText;
-//     var rows = [];
-//     var lastCategory = null;
-//     this.props.shortcuts.forEach(function(shortcut) {
-//       rows.push(<td>{shortcut.name}</td>);
-//     });
-//
-//     return (
-//       <tr>
-//         <td>{inputText}</td>
-//         {rows}
-//       </tr>
-//     );
-//   }
-// }
-
 
 class App extends Component {
-  state = {shortcuts: [], keyboardInput: 'yaya man', translations: {}}
+  state = {shortcuts: [], keyboardInput: 'cancer', translations: {}}
 
   constructor(props) {
     super(props);
@@ -65,15 +46,18 @@ class App extends Component {
         this.getShortcuts(word)
         .then(res => res.json())
         .then(response => {
-          translations[word] = response;
 
-          this.setState({
-            shortcuts: response,
-            translations: translations
-          });
+          if(response.length > 0) {
+            translations[word] = response;
+
+            this.setState({
+              shortcuts: response,
+              translations: translations
+            });
+          }
         })
         .catch(error => {
-          console.log(error);
+          // console.log(error);
         });
       }
     });
@@ -89,10 +73,20 @@ class App extends Component {
   render() {
     var rows = [];
     var lastCategory = null;
-    consLog(this.state.translations);
+    // consLog(this.state.translations);
+    var index = 0;
 
-    this.state.shortcuts.forEach(function(shortcut) {
-      rows.push(<tr><th>{shortcut.text}</th></tr>);
+    Object.keys(this.state.translations).map((key) => {
+      consLog(this.state.translations[key]);
+
+      var innerTranslations = [];
+
+      this.state.translations[key].forEach((potential) => {
+        index++;
+        innerTranslations.push(<th key={index}>{potential.text}</th>);
+      })
+      rows.push(<tr><th>{key}</th>{innerTranslations}</tr>);
+
     });
 
     return (

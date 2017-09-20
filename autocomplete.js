@@ -32,11 +32,9 @@ class Suggestions {
   }
 
   set(key, val) {
-
     var existing = this.get(key);
     var newVal = [{text: val}];
     this.output[key] = newVal.concat(existing);
-
   }
 }
 
